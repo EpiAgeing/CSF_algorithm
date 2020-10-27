@@ -1,0 +1,49 @@
+drop if ab42 > 10000
+
+
+xtile temp =  ptau, nq(100)
+
+gen new_var2 =.
+replace new_var2=1 if inrange(temp,10,30)
+replace new_var2=0 if inrange(temp,80,100)
+
+
+senspec new_var2  ab42, sens(sens ) spec(spec)
+gen youden= sens-(1-spec)
+egen youdenmax= max(youden)
+gen dist = sqrt((1-sens)^2 + (1-spec)^2)
+egen distmin = min(dist)
+list sens spec  youden     distmin  ab42 if abs(dist - distmin)<0.0001
+
+gen cutoffratio = ab42 if abs(dist - distmin)<0.0001
+egen cutoffratio2 = max(cutoffratio) 
+
+drop sens spec youden youdenmax dist distmin 
+
+
+generate classeratio = .
+replace classeratio = 0 if ab42 > (cutoffratio2 +  cutoffratio2*0.1) 
+replace classeratio = 1 if ab42 < (cutoffratio2 -  cutoffratio2*0.1) 
+
+
+senspec classeratio   tau , sens(sens ) spec(spec)
+gen youden= sens-(1-spec)
+egen youdenmax= max(youden)
+gen dist = sqrt((1-sens)^2 + (1-spec)^2)
+egen distmin = min(dist)
+list sens spec  youden     distmin  tau if abs(dist - distmin)<0.0001
+
+
+drop sens spec youden youdenmax dist distmin 
+
+
+senspec classeratio   ptau , sens(sens ) spec(spec)
+gen youden= sens-(1-spec)
+egen youdenmax= max(youden)
+gen dist = sqrt((1-sens)^2 + (1-spec)^2)
+egen distmin = min(dist)
+list sens spec  youden     distmin  ptau if abs(dist - distmin)<0.0001
+
+
+drop sens spec youden youdenmax dist distmin 
+
